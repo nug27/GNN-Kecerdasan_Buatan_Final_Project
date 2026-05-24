@@ -1,0 +1,199 @@
+{
+  "kode_kelompok": "K07",
+  "topik_pilihan": 1,
+  "nama_topik": "Convolutional Neural Network (CNN)",
+  "judul_proyek": "Klasifikasi Penyakit Daun Singkong Menggunakan ResNet-50 dengan Augmentasi Dataset Lokal",
+  "abstrak_singkat": "Proyek ini mengevaluasi efektivitas ResNet-50 pre-trained ImageNet untuk klasifikasi 5 kelas penyakit daun singkong. Dataset gabungan: 21.397 citra publik dari Kaggle Cassava Leaf Disease + 312 citra mandiri yang diambil tim di kebun percobaan Cibinong untuk memperkaya kelas minoritas (Cassava Brown Streak Disease). ResNet-50 (model utama) dibandingkan dengan VGG-16 (baseline). Hasil: F1-macro 0.89 pada test set gabungan, mengungguli baseline VGG-16 (0.83) dan ResNet-50 tanpa augmentasi lokal (0.85).",
+
+  "metode_ai": [
+    {
+      "nama": "ResNet-50",
+      "peran": "utama",
+      "varian": "Transfer learning, ImageNet pre-trained, fine-tuning 3 layer terakhir + classification head baru",
+      "catatan": "Backbone utama yang dilaporkan sebagai hasil terbaik."
+    },
+    {
+      "nama": "VGG-16",
+      "peran": "baseline",
+      "varian": "Transfer learning, ImageNet pre-trained, hanya classification head yang ditrain",
+      "catatan": "Pembanding untuk klaim bonus B1 (evaluasi komparatif)."
+    }
+  ],
+
+  "frameworks": [
+    {
+      "nama": "PyTorch",
+      "versi": "2.1",
+      "kegunaan": "Training utama, custom training loop"
+    },
+    {
+      "nama": "timm",
+      "versi": "0.9",
+      "kegunaan": "Loading backbone pre-trained (ResNet-50, VGG-16)"
+    },
+    {
+      "nama": "Albumentations",
+      "versi": "1.4",
+      "kegunaan": "Augmentasi citra"
+    }
+  ],
+
+  "datasets": [
+    {
+      "nama": "Cassava Leaf Disease Classification",
+      "tipe": "publik",
+      "sumber": "Kaggle Competition 2020",
+      "url_sumber_publik": "https://www.kaggle.com/c/cassava-leaf-disease-classification",
+      "jumlah_sampel": 21397,
+      "jumlah_kelas": 5,
+      "proses_akuisisi_mandiri": "",
+      "peran_di_proyek": "Dataset dasar (training + validasi). Mayoritas berasal dari kompetisi Kaggle 2020.",
+      "spek_rl": null
+    },
+    {
+      "nama": "Cassava Cibinong Field Set 2026",
+      "tipe": "mandiri",
+      "sumber": "Pengambilan lapangan oleh tim, Balitbangtan Cibinong",
+      "url_sumber_publik": "",
+      "jumlah_sampel": 312,
+      "jumlah_kelas": 5,
+      "proses_akuisisi_mandiri": "Pengambilan citra di lahan percobaan singkong Balitbangtan Cibinong pada 4-6 Mei 2026. Kamera: Sony Alpha 6400 + lensa 30mm, resolusi 6000x4000 di-resize ke 800x800. Fokus pada penambahan sampel kelas minoritas Cassava Brown Streak Disease. Setiap citra dianotasi 2 anggota tim independen (Cohen's kappa = 0.82); dispute diselesaikan anggota ke-3. Lisensi: CC-BY-4.0.",
+      "peran_di_proyek": "Augmentasi kelas minoritas + uji generalisasi distribusi geografis Indonesia. Mendukung klaim bonus B2.",
+      "spek_rl": null
+    },
+    {
+      "nama": "ImageNet-1k",
+      "tipe": "publik",
+      "sumber": "Stanford Vision Lab",
+      "url_sumber_publik": "https://www.image-net.org/",
+      "jumlah_sampel": 1281167,
+      "jumlah_kelas": 1000,
+      "proses_akuisisi_mandiri": "",
+      "peran_di_proyek": "Bobot pre-training untuk backbone CNN (tidak ditrain dari nol di proyek ini).",
+      "spek_rl": null
+    }
+  ],
+
+  "metrik_utama": [
+    "F1-macro",
+    "Accuracy",
+    "Per-class Precision/Recall",
+    "Confusion Matrix"
+  ],
+
+  "klaim_bonus": ["B1", "B2", "B3"],
+
+  "anggota": [
+    {
+      "nama": "Andi Pratama",
+      "npm": "2106012345",
+      "peran_utama": "Data Engineer & EDA",
+      "focus_area": [
+        "Akuisisi data lapangan Cibinong",
+        "Eksplorasi data",
+        "Pra-pemrosesan citra",
+        "Augmentasi",
+        "Penanganan class imbalance"
+      ],
+      "konsep_dikuasai_implementasi": [
+        "Albumentations pipeline (RandomCrop, HorizontalFlip, ColorJitter)",
+        "Weighted Random Sampler untuk imbalance",
+        "Image normalization (ImageNet stats)",
+        "Stratified train-val-test split"
+      ],
+      "konsep_dikuasai_teori": [
+        "Konsep data augmentation untuk regularisasi",
+        "Class imbalance dan dampaknya ke loss",
+        "Mixup & CutMix (tidak diimplementasi)",
+        "Cohen's kappa untuk inter-annotator agreement"
+      ],
+      "bagian_laporan": ["Bab III.1", "Bab III.6 (sebagian)"],
+      "bagian_kode": [
+        "src/data/",
+        "notebooks/01_eda.ipynb",
+        "notebooks/02_field_data_curation.ipynb"
+      ]
+    },
+    {
+      "nama": "Budi Santoso",
+      "npm": "2106067890",
+      "peran_utama": "Model Engineer",
+      "focus_area": [
+        "Arsitektur model",
+        "Transfer learning",
+        "Hyperparameter tuning",
+        "Training loop"
+      ],
+      "konsep_dikuasai_implementasi": [
+        "ResNet skip connection & bottleneck block",
+        "Layer freezing & gradual unfreezing",
+        "AdamW + OneCycleLR scheduler",
+        "Mixed precision training (torch.cuda.amp)",
+        "Grid search 4x3 untuk learning rate dan weight decay"
+      ],
+      "konsep_dikuasai_teori": [
+        "Backpropagation & gradient flow",
+        "Vanishing gradient & motivasi residual connection",
+        "Trade-off depth vs width pada CNN",
+        "Bias-variance tradeoff dalam transfer learning",
+        "Konsep cosine annealing vs OneCycleLR"
+      ],
+      "bagian_laporan": ["Bab II.2", "Bab II.3", "Bab III.2", "Bab III.5"],
+      "bagian_kode": [
+        "src/models/",
+        "src/train.py",
+        "src/utils/scheduler.py"
+      ]
+    },
+    {
+      "nama": "Citra Lestari",
+      "npm": "2106098765",
+      "peran_utama": "Evaluator & Report Writer",
+      "focus_area": [
+        "Evaluation pipeline",
+        "Error analysis",
+        "Grad-CAM visualisasi",
+        "Analisis etika & bias",
+        "Penyusunan laporan"
+      ],
+      "konsep_dikuasai_implementasi": [
+        "Sklearn classification_report & confusion_matrix",
+        "Grad-CAM dengan pytorch-grad-cam",
+        "Plotting hasil dengan matplotlib & seaborn",
+        "Per-class error analysis pipeline"
+      ],
+      "konsep_dikuasai_teori": [
+        "F1-macro vs F1-micro vs weighted",
+        "Interpretasi confusion matrix pada multiclass imbalanced",
+        "Konsep CAM/Grad-CAM untuk interpretability",
+        "Limitasi metric akurasi pada imbalanced data",
+        "Geographical & temporal bias pada dataset citra pertanian"
+      ],
+      "bagian_laporan": ["Bab III.3", "Bab III.4", "Bab III.6", "Bab III.7", "Bab V"],
+      "bagian_kode": [
+        "src/evaluation/",
+        "notebooks/03_error_analysis.ipynb",
+        "notebooks/04_grad_cam_demo.ipynb"
+      ]
+    }
+  ],
+
+  "tautan": {
+    "github": "https://github.com/k07-ai-uas/cassava-resnet50-hybrid",
+    "colab": "https://colab.research.google.com/drive/1aBcDeFgHiJkLmN0pQrStUvWxYz",
+    "dataset_mandiri": "https://drive.google.com/drive/folders/xxxxxxxxxxx",
+    "video_demo": null
+  },
+
+  "ai_assistant_usage": {
+    "digunakan": true,
+    "tools": ["Claude Opus 4.7", "GitHub Copilot"],
+    "bagian": [
+      "Debugging error CUDA out of memory saat batch besar",
+      "Drafting paragraf bagian related work (Bab II.1)",
+      "Pembentukan struktur classification_report custom",
+      "Review struktur kalimat akademik"
+    ],
+    "estimasi_persentase": 15
+  }
+}
