@@ -1,0 +1,25 @@
+# SecondPrice Backend — Python Dependencies
+# Install dengan: pip install -r requirements.txt
+
+# Web Framework
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+pydantic>=2.7.0
+
+# Data Science
+numpy>=1.26.0
+pandas>=2.2.0
+scikit-learn>=1.4.0
+xgboost>=2.0.0
+scipy>=1.13.0
+
+# PyTorch (CPU default — ganti dengan versi CUDA jika perlu)
+# Untuk CUDA 12.1: pip install torch --index-url https://download.pytorch.org/whl/cu121
+torch>=2.3.0
+
+# PyTorch Geometric
+torch-geometric>=2.5.0
+
+# Opsional (untuk profiling / testing)
+pytest>=8.0.0
+httpx>=0.27.0   # untuk TestClient FastAPI
