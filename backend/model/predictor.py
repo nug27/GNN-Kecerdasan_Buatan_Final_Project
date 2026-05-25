@@ -35,11 +35,10 @@ from torch_geometric.transforms import ToUndirected
 
 SEED = 42
 MAX_ROWS = 200_000
-
-# Update path ini sesuai lokasi train.tsv
-# Contoh: Path('d:/data/train.tsv') atau Path('./train.tsv')
-TRAIN_FILE = Path('d:/AI/backend/model/content/train2.csv')  # CSV file path
+DATA_DIR = Path('/content')
+TRAIN_FILE = DATA_DIR / 'train.tsv'
 ARTIFACT_DIR = Path('backend/model')
+CSV_ENCODING = os.getenv('CSV_ENCODING', 'latin-1')
 
 
 # ============================================================================
