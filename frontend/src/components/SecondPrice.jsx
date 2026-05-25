@@ -54,8 +54,8 @@ const INITIAL_FORM = {
 const MODEL_INFO = [
   { key: "graphsage_price", label: "GraphSAGE", type: "GNN", color: "#4f46e5" },
   { key: "gat_price",       label: "GAT",       type: "GNN", color: "#7c3aed" },
-  { key: "tfidf_ridge_price", label: "TF-IDF + Ridge", type: "Baseline", color: "#0891b2" },
-  { key: "xgboost_price",   label: "XGBoost",   type: "Baseline", color: "#0d9488" },
+  // { key: "tfidf_ridge_price", label: "TF-IDF + Ridge", type: "Baseline", color: "#0891b2" },
+  // { key: "xgboost_price",   label: "XGBoost",   type: "Baseline", color: "#0d9488" },
 ];
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
