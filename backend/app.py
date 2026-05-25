@@ -1,7 +1,17 @@
-from fastapi import FastAPI
+import logging
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
+# Setup logger
+logger = logging.getLogger(__name__)
+
 app = FastAPI(title="SecondPrice API")
+
+# ===== Models (Request & Response) =====
+class HealthResponse(BaseModel):
+    status: str
+    model_loaded: bool
+    device: str
 
 class PredictRequest(BaseModel):
     name: str
@@ -19,6 +29,17 @@ class PredictResponse(BaseModel):
     ensemble_price: float
     currency: str = "USD"
 
+class BatchPredictRequest(BaseModel):
+    items: list[PredictRequest]
+
+class BatchPredictResponse(BaseModel):
+    predictions: list[PredictResponse]
+    count: int
+
+# ===== Initialize Predictor =====
+predictor = None
+
+# ===== Routes =====
 @app.get("/health", response_model=HealthResponse, tags=["System"])
 def health_check():
     """Cek status server dan apakah model sudah dimuat."""
