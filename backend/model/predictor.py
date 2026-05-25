@@ -35,8 +35,10 @@ from torch_geometric.transforms import ToUndirected
 
 SEED = 42
 MAX_ROWS = 200_000
-DATA_DIR = Path('/content')
-TRAIN_FILE = DATA_DIR / 'train.tsv'
+
+# Update path ini sesuai lokasi train.tsv
+# Contoh: Path('d:/data/train.tsv') atau Path('./train.tsv')
+TRAIN_FILE = Path('d:/AI/backend/model/content/train2.csv')  # CSV file path
 ARTIFACT_DIR = Path('backend/model')
 
 
@@ -299,7 +301,7 @@ def compute_regression_metrics(y_true_log, y_pred_log):
 
 def load_and_preprocess(filepath, nrows=MAX_ROWS):
     """Load dan preprocess dataset, return train/val/test splits."""
-    df = pd.read_csv(filepath, sep='\t', nrows=nrows)
+    df = pd.read_csv(filepath, sep=',', nrows=nrows)
     df = df[df['price'] > 0].reset_index(drop=True)
 
     df['brand_name'] = df['brand_name'].fillna('No Brand')
