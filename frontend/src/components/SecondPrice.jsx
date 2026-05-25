@@ -1,210 +1,26 @@
-/**
- * SecondPrice — React UI Component
- * Terhubung ke FastAPI backend di secondprice_backend/app.py
- *
- * Cara pakai:
- *   import SecondPrice from './components/SecondPrice'
- *   <SecondPrice apiUrl="http://localhost:8000" />
- *
- * Props:
- *   apiUrl  : string  — URL backend FastAPI (default: http://localhost:8000)
- */
-
-import { useState, useCallback } from "react";
-
-// ── Konstanta ────────────────────────────────────────────────────────────────
-
-const CATEGORY_OPTIONS = [
-  "Women/Tops & Blouses/T-Shirts",
-  "Women/Tops & Blouses/Blouse",
-  "Women/Dresses/Above Knee",
-  "Women/Bottoms/Jeans",
-  "Women/Shoes/Athletic",
-  "Men/Tops & Shirts/T-Shirts",
-  "Men/Pants/Jeans",
-  "Men/Shoes/Athletic",
-  "Kids/Clothing/Girls",
-  "Kids/Clothing/Boys",
-  "Beauty/Makeup/Face",
-  "Beauty/Skincare/Face",
-  "Electronics/Phones & Accessories/Cell Phones",
-  "Electronics/Computers & Tablets/Laptops & Computers",
-  "Home/Home Décor/Picture Frames & Displays",
-  "Sports & Outdoors/Outdoor Recreation/Camping & Hiking",
-  "Other/Other/Other",
-];
-
-const CONDITION_LABELS = {
-  1: { label: "Baru", color: "#16a34a" },
-  2: { label: "Baru — tanpa tag", color: "#65a30d" },
-  3: { label: "Baik", color: "#ca8a04" },
-  4: { label: "Cukup Baik", color: "#ea580c" },
-  5: { label: "Buruk", color: "#dc2626" },
-};
-
-const INITIAL_FORM = {
-  name: "",
-  brand_name: "",
-  category_name: "Other/Other/Other",
-  item_condition_id: 1,
-  shipping: 0,
-  item_description: "",
-};
-
-const MODEL_INFO = [
-  { key: "graphsage_price", label: "GraphSAGE", type: "GNN", color: "#4f46e5" },
-  { key: "gat_price",       label: "GAT",       type: "GNN", color: "#7c3aed" },
-  { key: "tfidf_ridge_price", label: "TF-IDF + Ridge", type: "Baseline", color: "#0891b2" },
-  { key: "xgboost_price",   label: "XGBoost",   type: "Baseline", color: "#0d9488" },
-];
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-const USD_TO_IDR = 15500; // Kurs konversi (update sesuai kurs real)
-
-const fmt = (val) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(val);
-
-const fmtIDR = (val) =>
-  new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(val * USD_TO_IDR);
-
-// ── Sub-components ────────────────────────────────────────────────────────────
-
-function Badge({ children, color = "#4f46e5" }) {
-  return (
-    <span
-      style={{
-        fontSize: 11,
-        fontWeight: 500,
-        padding: "2px 8px",
-        borderRadius: 99,
-        backgroundColor: color + "18",
-        color,
-        border: `1px solid ${color}30`,
-        letterSpacing: "0.02em",
-      }}
-    >
-      {children}
-    </span>
-  );
-}
-
-function ModelCard({ label, type, price, color, isTop }) {
-  return (
-    <div
-      style={{
-        background: "#fff",
-        border: isTop ? `2px solid ${color}` : "1px solid #e5e7eb",
-        borderRadius: 12,
-        padding: "16px 20px",
-        position: "relative",
-        transition: "box-shadow 0.15s",
-      }}
-    >
-      {isTop && (
-        <span
-          style={{
-            position: "absolute",
-            top: -11,
-            left: 16,
-            background: color,
-            color: "#fff",
-            fontSize: 10,
-            fontWeight: 600,
-            padding: "2px 10px",
-            borderRadius: 99,
-            letterSpacing: "0.05em",
-          }}
-        >
-          TERBAIK
-        </span>
-      )}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <div>
-          <p style={{ margin: 0, fontSize: 13, color: "#6b7280", fontWeight: 500 }}>{label}</p>
-          <Badge color={color}>{type}</Badge>
-        </div>
-        <div style={{ textAlign: "right" }}>
-          <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color }}>{fmt(price)}</p>
-          <p style={{ margin: "4px 0 0", fontSize: 11, color: "#9ca3af" }}>{fmtIDR(price)}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function EnsembleCard({ price }) {
-  return (
-    <div
-      style={{
-        background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
-        borderRadius: 16,
-        padding: "20px 24px",
-        color: "#fff",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-      }}
-    >
-       <div>
-        <p style={{ margin: 0, fontSize: 13, opacity: 0.85, fontWeight: 500 }}>
-          Rekomendasi Harga Jual
-        </p>
-        <p style={{ margin: "4px 0 0", fontSize: 11, opacity: 0.65 }}>
-          Median dari 4 model (robust, tidak sensitif outlier)
-        </p>
-      </div>
-      <div style={{ textAlign: "right" }}>
-        <p style={{ margin: 0, fontSize: 32, fontWeight: 800 }}>{fmt(price)}</p>
-        <p style={{ margin: "4px 0 0", fontSize: 12, opacity: 0.85 }}>{fmtIDR(price)}</p>
-      </div>
-    </div>
-  );
-}
-
-function HealthDot({ status }) {
-  const ok = status === "ok";
-  return (
-    <span
-      style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "#6b7280" }}
-    >
-      <span
-        style={{
-          width: 8,
-          height: 8,
-          borderRadius: "50%",
-          background: ok ? "#16a34a" : status === null ? "#d1d5db" : "#dc2626",
-          display: "inline-block",
-        }}
-      />
-      {ok ? "Backend terhubung" : status === null ? "Mengecek..." : "Backend tidak tersedia"}
-    </span>
-  );
-}
-
-// ── Main Component ────────────────────────────────────────────────────────────
+import { useState } from "react";
+import { useSecondPrice } from "../hooks/useSecondPrice";
+import HealthDot from "./HealthDot";
+import EnsembleCard from "./EnsembleCard";
+import ModelCard from "./ModelCard";
+import {
+  CATEGORY_OPTIONS,
+  CONDITION_LABELS,
+  INITIAL_FORM,
+  MODEL_INFO,
+  USD_TO_IDR,
+  labelStyle,
+  inputStyle,
+  primaryBtnStyle,
+  secondaryBtnStyle,
+} from "../utils/constants";
 
 export default function SecondPrice({ apiUrl = "http://localhost:8000" }) {
   const [form, setForm] = useState(INITIAL_FORM);
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [health, setHealth] = useState(null); // null | "ok" | "error"
+  const [validationError, setValidationError] = useState(null);
 
-  // Cek koneksi backend saat mount
-  const checkHealth = useCallback(async () => {
-    setHealth(null);
-    try {
-      const res = await fetch(`${apiUrl}/health`);
-      const data = await res.json();
-      setHealth(data.status === "ok" ? "ok" : "error");
-    } catch {
-      setHealth("error");
-    }
-  }, [apiUrl]);
-
-  // Jalankan health check sekali
-  useState(() => { checkHealth(); }, []);
+  // Menggunakan custom hook yang sudah Anda buat
+  const { predict, loading, error: apiError, result, health, checkHealth, reset } = useSecondPrice(apiUrl);
 
   const handleChange = (field) => (e) => {
     const val =
@@ -216,55 +32,34 @@ export default function SecondPrice({ apiUrl = "http://localhost:8000" }) {
 
   const handleSubmit = async () => {
     if (!form.name.trim()) {
-      setError("Nama produk wajib diisi.");
+      setValidationError("Nama produk wajib diisi.");
       return;
     }
-    setError(null);
-    setLoading(true);
-    setResult(null);
-    try {
-      const res = await fetch(`${apiUrl}/predict`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || "Gagal mendapat prediksi.");
-      }
-      const data = await res.json();
-      setResult(data);
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
+    setValidationError(null);
+    await predict(form);
   };
 
   const handleReset = () => {
     setForm(INITIAL_FORM);
-    setResult(null);
-    setError(null);
+    setValidationError(null);
+    reset();
   };
 
-  // Cari model dengan harga tertinggi/terendah untuk highlight
-  const topModelKey = result
-    ? MODEL_INFO.reduce((best, m) =>
-        result[m.key] > result[best.key] ? m : best
-      , MODEL_INFO[0]).key
-    : null;
+  // Gabungkan error dari validasi lokal atau dari API backend
+  const displayError = validationError || apiError;
 
-  // ── Render ──────────────────────────────────────────────────────────────────
+  const topModelKey = result
+    ? MODEL_INFO.reduce((best, m) => (result[m.key] > result[best.key] ? m : best), MODEL_INFO[0]).key
+    : null;
 
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: "24px 16px", fontFamily: "system-ui, sans-serif" }}>
-
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
             <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "#111827" }}>
-              🏷️ SecondPrice
+               SecondPrice
             </h1>
             <p style={{ margin: "4px 0 0", fontSize: 14, color: "#6b7280" }}>
               Prediksi harga barang bekas dengan Graph Neural Network
@@ -297,8 +92,6 @@ export default function SecondPrice({ apiUrl = "http://localhost:8000" }) {
         </h2>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-
-          {/* Nama Produk */}
           <div style={{ gridColumn: "1 / -1" }}>
             <label style={labelStyle}>Nama Produk *</label>
             <input
@@ -310,7 +103,6 @@ export default function SecondPrice({ apiUrl = "http://localhost:8000" }) {
             />
           </div>
 
-          {/* Brand */}
           <div>
             <label style={labelStyle}>Merek (Brand)</label>
             <input
@@ -322,21 +114,15 @@ export default function SecondPrice({ apiUrl = "http://localhost:8000" }) {
             />
           </div>
 
-          {/* Kategori */}
           <div>
             <label style={labelStyle}>Kategori</label>
-            <select
-              value={form.category_name}
-              onChange={handleChange("category_name")}
-              style={inputStyle}
-            >
+            <select value={form.category_name} onChange={handleChange("category_name")} style={inputStyle}>
               {CATEGORY_OPTIONS.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
           </div>
 
-          {/* Kondisi */}
           <div>
             <label style={labelStyle}>
               Kondisi Barang &nbsp;
@@ -356,7 +142,6 @@ export default function SecondPrice({ apiUrl = "http://localhost:8000" }) {
             </div>
           </div>
 
-          {/* Ongkir */}
           <div>
             <label style={labelStyle}>Siapa yang bayar ongkir?</label>
             <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
@@ -396,7 +181,6 @@ export default function SecondPrice({ apiUrl = "http://localhost:8000" }) {
             </div>
           </div>
 
-          {/* Deskripsi */}
           <div style={{ gridColumn: "1 / -1" }}>
             <label style={labelStyle}>Deskripsi Produk</label>
             <textarea
@@ -409,8 +193,7 @@ export default function SecondPrice({ apiUrl = "http://localhost:8000" }) {
           </div>
         </div>
 
-        {/* Error */}
-        {error && (
+        {displayError && (
           <div
             style={{
               marginTop: 16,
@@ -422,18 +205,13 @@ export default function SecondPrice({ apiUrl = "http://localhost:8000" }) {
               fontSize: 13,
             }}
           >
-            ⚠️ {error}
+            ⚠️ {displayError}
           </div>
         )}
 
-        {/* Actions */}
         <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
           <button onClick={handleSubmit} disabled={loading} style={primaryBtnStyle}>
-            {loading ? (
-              <span>⏳ Memproses...</span>
-            ) : (
-              <span>🔮 Prediksi Harga</span>
-            )}
+            {loading ? <span>⏳ Memproses...</span> : <span> Prediksi Harga</span>}
           </button>
           <button onClick={handleReset} style={secondaryBtnStyle}>
             Reset
@@ -444,10 +222,7 @@ export default function SecondPrice({ apiUrl = "http://localhost:8000" }) {
       {/* Result */}
       {result && (
         <div>
-          {/* Ensemble Highlight */}
           <EnsembleCard price={result.ensemble_price} />
-
-          {/* Per-model breakdown */}
           <div style={{ marginTop: 16, marginBottom: 8 }}>
             <p style={{ margin: 0, fontSize: 13, color: "#6b7280", fontWeight: 500 }}>
               Rincian per model
@@ -465,59 +240,11 @@ export default function SecondPrice({ apiUrl = "http://localhost:8000" }) {
               />
             ))}
           </div>
-
-           <p style={{ margin: "16px 0 0", fontSize: 12, color: "#9ca3af", textAlign: "center" }}>
+          <p style={{ margin: "16px 0 0", fontSize: 12, color: "#9ca3af", textAlign: "center" }}>
              Harga dalam USD & IDR (kurs: 1 USD = Rp {USD_TO_IDR.toLocaleString("id-ID")}) · Model: GraphSAGE, GAT, TF-IDF+Ridge, XGBoost · Hanya estimasi.
-           </p>
+          </p>
         </div>
       )}
     </div>
   );
 }
-
-// ── Shared Styles ─────────────────────────────────────────────────────────────
-
-const labelStyle = {
-  display: "block",
-  fontSize: 13,
-  fontWeight: 500,
-  color: "#374151",
-  marginBottom: 6,
-};
-
-const inputStyle = {
-  width: "100%",
-  padding: "9px 12px",
-  fontSize: 14,
-  border: "1px solid #d1d5db",
-  borderRadius: 8,
-  outline: "none",
-  color: "#111827",
-  background: "#fff",
-  boxSizing: "border-box",
-  fontFamily: "inherit",
-};
-
-const primaryBtnStyle = {
-  flex: 1,
-  padding: "11px 20px",
-  fontSize: 14,
-  fontWeight: 600,
-  color: "#fff",
-  background: "#4f46e5",
-  border: "none",
-  borderRadius: 10,
-  cursor: "pointer",
-  transition: "background 0.15s",
-};
-
-const secondaryBtnStyle = {
-  padding: "11px 20px",
-  fontSize: 14,
-  fontWeight: 500,
-  color: "#374151",
-  background: "#f9fafb",
-  border: "1px solid #e5e7eb",
-  borderRadius: 10,
-  cursor: "pointer",
-};
